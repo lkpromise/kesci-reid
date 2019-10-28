@@ -1,3 +1,6 @@
+## 查看数据分布的一个脚本
+## author：liu
+## date:2019-10-28
 import matplotlib.pyplot as plt
 import os
 
