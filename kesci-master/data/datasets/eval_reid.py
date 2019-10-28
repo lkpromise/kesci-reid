@@ -5,7 +5,7 @@
 """
 
 import numpy as np
-
+import json
 
 def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
     """Evaluation with market1501 metric
@@ -61,3 +61,27 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
     mAP = np.mean(all_AP)
 
     return all_cmc, mAP
+def eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
+    """Evaluation with market1501 metric
+        Key: for each query identity, its gallery images from the same camera view are discarded.
+        """
+    num_q, num_g = distmat.shape
+    if num_g < max_rank:
+        max_rank = num_g
+        print("Note: number of gallery samples is quite small, got {}".format(num_g))
+    indices = np.argsort(distmat, axis=1)
+    result = {}
+    for q_idx in range(num_q):
+        q_n = q_pids[q_idx]
+        order = indices[q_idx]
+        ctx = list()
+        query_name = "{}.png".format(q_n)
+        #ctx.append("%(id)05d"%{'id':int(q_n)})
+        for i in order[:200]:
+            ctx.append("{}.png".format(g_pids[i]))
+        result[query_name]=ctx
+    # 写入csv文件
+    print("正在写入...")
+    with open("result.json",'w',encoding="utf-8") as f:
+        json.dump(result,f)
+        print("已写入结果文件")

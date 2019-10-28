@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from ignite.metrics import Metric
 
-from data.datasets.eval_reid import eval_func
+from data.datasets.eval_reid import eval_func,eval_func_kesci
 from .re_ranking import re_ranking
 
 
@@ -92,6 +92,6 @@ class R1_mAP_reranking(Metric):
         # distmat = distmat.cpu().numpy()
         print("Enter reranking")
         distmat = re_ranking(qf, gf, k1=20, k2=6, lambda_value=0.3)
-        cmc, mAP = eval_func(distmat, q_pids, g_pids, q_camids, g_camids)
+        eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids)
 
-        return cmc, mAP
+        #return cmc, mAP

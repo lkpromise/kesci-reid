@@ -60,8 +60,8 @@ SOLVER:
 TEST:
   IMS_PER_BATCH: 128
   RE_RANKING: 'yes'
-  WEIGHT: "/home/liuk/reid-result/baseline_liuk_modified/se_resnext101_model_120.pth"
+  WEIGHT: "/home/liuk/kesci_result/baseline_kesci/se_resnext101_model_40.pth"
   NECK_FEAT: 'after'
   FEAT_NORM: 'yes'
 
-OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci"
+OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci/test_log"
