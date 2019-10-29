@@ -10,6 +10,7 @@ from .msmt17 import MSMT17
 from .veri import VeRi
 from .dataset_loader import ImageDataset
 from .kesci import Kesci
+from .kesci_all import Kesci_all
 
 __factory = {
     'market1501': Market1501,
@@ -17,7 +18,8 @@ __factory = {
     'dukemtmc': DukeMTMCreID,
     'msmt17': MSMT17,
     'veri': VeRi,
-    'kesci':Kesci
+    'kesci':Kesci,
+    'kesci_all':Kesci_all
 }
 
 

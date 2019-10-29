@@ -21,15 +21,24 @@ class Kesci(BaseImageDataset):
     def __init__(self, root='/home/liuk/data/', verbose=True, **kwargs):
         super(Kesci, self).__init__()
         self.dataset_dir = osp.join(root, self.dataset_dir)
-        self.train_dir = osp.join(self.dataset_dir, 'train_data/train_set')
-        self.query_dir = osp.join(self.dataset_dir, 'test_data/query_a')
-        self.gallery_dir = osp.join(self.dataset_dir, 'test_data/gallery_a')
+        ## 用全部数据训练，并生成测试结果
+        # self.train_dir = osp.join(self.dataset_dir, 'train_data/train_set')
+        # self.query_dir = osp.join(self.dataset_dir, 'test_data/query_a')
+        # self.gallery_dir = osp.join(self.dataset_dir, 'test_data/gallery_a')
+
+        self.train_dir = osp.join(self.dataset_dir, 'train_data/train_part')
+        self.query_dir = osp.join(self.dataset_dir, 'valid_data/query')
+        self.gallery_dir = osp.join(self.dataset_dir, 'valid_data/gallery')
 
         self._check_before_run()
 
-        train = self._process_dir(self.train_dir, relabel=True)
-        query = self._process_dir(self.query_dir, relabel=False)
-        gallery = self._process_dir(self.gallery_dir, relabel=False)
+        train = self._process_dir(self.train_dir, relabel=True,type=True)
+        query = self._process_dir(self.query_dir, relabel=True)
+        gallery = self._process_dir(self.gallery_dir, relabel=True)
+
+        # train = self._process_dir(self.train_dir, relabel=True,type=True)
+        # query = self._process_dir(self.query_dir)
+        # gallery = self._process_dir(self.gallery_dir)
 
         if verbose:
             print("=> Kesci loaded")
@@ -54,16 +63,24 @@ class Kesci(BaseImageDataset):
         if not osp.exists(self.gallery_dir):
             raise RuntimeError("'{}' is not available".format(self.gallery_dir))
 
-    def _process_dir(self, dir_path, relabel=False):
+    def _process_dir(self, dir_path, relabel=False,type=False):
         dataset = []
         if relabel:
-            file_path = osp.join(dir_path,"train_list.txt")
+            file_path = osp.join(dir_path,"list.txt")
+            pid_container = set()
+            with open(file_path,'r') as f:
+                file = f.readlines()
+                for line in file:
+                    id = int(line.split()[-1])
+                    pid_container.add(id)
+            pid2label = {pid: label for label, pid in enumerate(pid_container)}
             with open(file_path,'r') as f:
                 file = f.readlines()
                 for line in file:
                     img_name = line.split()[0].split('/')[-1]
                     img_path = osp.join(dir_path,img_name)
                     id = int(line.split()[-1])
+                    if type: id =pid2label[id]
                     camid = random.randint(0,6)
                     dataset.append((img_path,id,camid))
         else:

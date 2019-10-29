@@ -12,7 +12,7 @@ INPUT:
   SIZE_TRAIN: [256, 128]
   SIZE_TEST: [256, 128]
   PROB: 0.5 # random horizontal flip
-  RE_PROB: 0.0 # random erasing
+  RE_PROB: 0.5 # random erasing
   PADDING: 10
 
 DATASETS:
@@ -44,7 +44,7 @@ SOLVER:
   BIAS_LR_FACTOR: 1
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 64
+  IMS_PER_BATCH: 256
 
   STEPS: [40, 70]
   GAMMA: 0.1
@@ -59,9 +59,9 @@ SOLVER:
 
 TEST:
   IMS_PER_BATCH: 128
-  RE_RANKING: 'yes'
-  WEIGHT: "/home/liuk/kesci_result/baseline_kesci/se_resnext101_model_40.pth"
-  NECK_FEAT: 'after'
-  FEAT_NORM: 'yes'
+  RE_RANKING: 'no'
+  WEIGHT: "/home/liuk/kesci_result/baseline_kesci_valid/se_resnext101_model_120.pth"
+  NECK_FEAT: 'before'
+  FEAT_NORM: 'no'
 
-OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci/test_log"
+OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci_valid/test_log"

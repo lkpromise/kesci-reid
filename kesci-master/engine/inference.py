@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from ignite.engine import Engine
 
-from utils.reid_metric import R1_mAP, R1_mAP_reranking
+from utils.reid_metric import R1_mAP, R1_mAP_reranking,R1_mAP_kesci,R1_mAP_reranking_kesci
 
 
 def create_supervised_evaluator(model, metrics,
@@ -73,3 +73,30 @@ def inference(
     logger.info("mAP: {:.1%}".format(mAP))
     for r in [1, 5, 10]:
         logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+def inference_kesci(
+        cfg,
+        model,
+        val_loader,
+        num_query
+):
+    device = cfg.MODEL.DEVICE
+
+    logger = logging.getLogger("reid_baseline.inference")
+    logger.info("Enter inferencing")
+    if cfg.TEST.RE_RANKING == 'no':
+        print("Create evaluator")
+        evaluator = create_supervised_evaluator(model, metrics={'r1_mAP': R1_mAP_kesci(num_query, max_rank=50, feat_norm=cfg.TEST.FEAT_NORM)},
+                                                device=device)
+    elif cfg.TEST.RE_RANKING == 'yes':
+        print("Create evaluator for reranking")
+        evaluator = create_supervised_evaluator(model, metrics={'r1_mAP': R1_mAP_reranking_kesci(num_query, max_rank=50, feat_norm=cfg.TEST.FEAT_NORM)},
+                                                device=device)
+    else:
+        print("Unsupported re_ranking config. Only support for no or yes, but got {}.".format(cfg.TEST.RE_RANKING))
+
+    evaluator.run(val_loader)
+    evaluator.state.metrics['r1_mAP']
+    logger.info('Validation Results')
+    # logger.info("mAP: {:.1%}".format(mAP))
+    # for r in [1, 5, 10]:
+    #     logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))

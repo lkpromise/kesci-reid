@@ -25,7 +25,8 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
     for q_idx in range(num_q):
         # get query pid and camid
         q_pid = q_pids[q_idx]
-        q_camid = q_camids[q_idx]
+        ## 不进行移除，强行将所有的query_camid设为10
+        q_camid = 10
 
         # remove gallery samples that have the same pid and camid with query
         order = indices[q_idx]
@@ -82,6 +83,6 @@ def eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
         result[query_name]=ctx
     # 写入csv文件
     print("正在写入...")
-    with open("result.json",'w',encoding="utf-8") as f:
+    with open("result_1029_02.json",'w',encoding="utf-8") as f:
         json.dump(result,f)
         print("已写入结果文件")
