@@ -8,7 +8,7 @@ import numpy as np
 query_a = "/home/liuk/data/kesci/test_data/query_a"
 gallery_a = "/home/liuk/data/kesci/test_data/gallery_a"
 
-with open("/home/liuk/code/kesci/kesci-master/result.json",'r') as f:
+with open("/home/liuk/code/kesci/kesci-master/result_1029.json",'r') as f:
     file = json.load(f)
     img_result = np.zeros((2560,1280,3),np.uint8)
     i = 0
@@ -23,4 +23,4 @@ with open("/home/liuk/code/kesci/kesci-master/result.json",'r') as f:
         else:
             break
 
-    cv2.imwrite("result.png",img_result)
+    cv2.imwrite("result_1029.png",img_result)
