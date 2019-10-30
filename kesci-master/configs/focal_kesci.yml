@@ -4,7 +4,7 @@ MODEL:
   METRIC_LOSS_TYPE: 'triplet'
   IF_LABELSMOOTH: 'on'
   IF_WITH_CENTER: 'no'
-  DEVICE_ID: ('2,3')
+  DEVICE_ID: ('0,3')
   NAME: se_resnext101
 
 
@@ -21,7 +21,7 @@ DATASETS:
   ROOT_DIR: ('/home/liuk/data')
 
 DATALOADER:
-  SAMPLER: 'softmax_triplet'
+  SAMPLER: 'focal_triplet'
   NUM_INSTANCE: 4
   NUM_WORKERS: 8
 
@@ -44,7 +44,7 @@ SOLVER:
   BIAS_LR_FACTOR: 1
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 64
+  IMS_PER_BATCH: 128
 
   STEPS: [40, 70]
   GAMMA: 0.1
@@ -64,4 +64,4 @@ TEST:
   NECK_FEAT: 'before'
   FEAT_NORM: 'no'
 
-OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci_valid/batch64"
+OUTPUT_DIR: "/home/liuk/kesci_result/baseline_kesci_focal"

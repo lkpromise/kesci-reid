@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 from .triplet_loss import TripletLoss, CrossEntropyLabelSmooth
 from .center_loss import CenterLoss
+from .focal_loss import FocalLoss
 
 
 def make_loss(cfg, num_classes):    # modified by gu
@@ -32,12 +33,33 @@ def make_loss(cfg, num_classes):    # modified by gu
         def loss_func(score, feat, target):
             if cfg.MODEL.METRIC_LOSS_TYPE == 'triplet':
                 if cfg.MODEL.IF_LABELSMOOTH == 'on':
-                    return xent(score, target) + triplet(feat, target)[0],xent(score, target),triplet(feat, target)[0]  ## modified by liu 0926
+                    ## add by liu 10-29#################
+                    loss_soft = [xent(cls,target) for cls in score]
+                    loss_tri = [triplet(f,target)[0] for f in feat]
+                    loss_soft = sum(loss_soft)/len(loss_soft)
+                    loss_tri = sum(loss_tri)/len(loss_tri)
+                    ########################
+                    return loss_soft+loss_tri,loss_soft,loss_tri
+                    #return xent(score, target) + triplet(feat, target)[0],xent(score, target),triplet(feat, target)[0]  ## modified by liu 0926
                 else:
                     return F.cross_entropy(score, target) + triplet(feat, target)[0]
             else:
                 print('expected METRIC_LOSS_TYPE should be triplet'
                       'but got {}'.format(cfg.MODEL.METRIC_LOSS_TYPE))
+    elif cfg.DATALOADER.SAMPLER == 'focal_triplet':      ## new add by liu
+        def loss_func(score,feat,target):
+            if cfg.MODEL.METRIC_LOSS_TYPE == 'triplet':
+                #FocalLoss(gamma=2,alpha=0.25)(score,target)
+                focal = FocalLoss(num_classes,alpha=0.25,gamma=2,use_alpha=True)
+                ## add by liu 10-29#################
+                loss_soft = [focal(cls,target) for cls in score]
+                loss_tri = [triplet(f,target)[0] for f in feat]
+                loss_soft = sum(loss_soft)/len(loss_soft)
+                loss_tri = sum(loss_tri)/len(loss_tri)
+                ########################
+                return loss_soft+loss_tri,loss_soft,loss_tri
+            else:
+                return xent(score, target) + triplet(feat, target)[0]
     else:
         print('expected sampler should be softmax, triplet or softmax_triplet, '
               'but got {}'.format(cfg.DATALOADER.SAMPLER))

@@ -48,7 +48,7 @@ def create_supervised_trainer(model, optimizer, loss_fn,
         loss.backward()
         optimizer.step()
         # compute acc
-        acc = (score.max(1)[1] == target).float().mean()
+        acc = (score[0].max(1)[1] == target).float().mean()
         return loss.item(), acc.item(),cross.item(),tri.item()  ## modified by liu
 
     return Engine(_update)
@@ -277,7 +277,7 @@ def do_train_with_center(
             logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.3f},cross_loss:{:.3f}, tri_loss:{:.3f},center_loss:{:.3f},Acc: {:.3f}, Base Lr: {:.2e}"
                         .format(engine.state.epoch, ITER, len(train_loader),
                                 engine.state.metrics['avg_loss'],engine.state.metrics['cross_loss'],
-                                engine.state.metrics['tri_loss'], 
+                                engine.state.metrics['tri_loss'],
                                 engine.state.metrics['center_loss'],engine.state.metrics['avg_acc'],
                                 scheduler.get_lr()[0]))
         if len(train_loader) == ITER:
