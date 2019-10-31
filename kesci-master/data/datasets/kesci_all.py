@@ -87,8 +87,9 @@ class Kesci_all(BaseImageDataset):
             img_name = os.listdir(dir_path)
             for i in img_name:
                 img_path = osp.join(dir_path,i)
+                ## 生成结果的时候才能用下面这一行
                 id = i.split('.')[0]
-                # id = random.randint(4768,8600)
+                #id = random.randint(4768,8600)
                 camid = random.randint(0,6)
                 dataset.append((img_path,id,camid))
         return dataset
