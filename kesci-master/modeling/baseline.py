@@ -10,6 +10,7 @@ from torch import nn
 from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.senet import SENet, SEResNetBottleneck, SEBottleneck, SEResNeXtBottleneck
 from .backbones.resnet_ibn_a import resnet50_ibn_a
+from .backbones.nonlocal_se import SENet_local
 
 
 def weights_init_kaiming(m):
@@ -124,6 +125,17 @@ class Baseline(nn.Module):
                               groups=64,
                               reduction=16,
                               dropout_p=0.2,
+                              last_stride=last_stride)
+        elif model_name == 'se_resnext101_local':
+            self.base = SENet_local(block=SEResNeXtBottleneck,
+                              layers=[3, 4, 23, 3],
+                              groups=32,
+                              reduction=16,
+                              dropout_p=None,
+                              inplanes=64,
+                              input_3x3=False,
+                              downsample_kernel_size=1,
+                              downsample_padding=0,
                               last_stride=last_stride)
         elif model_name == 'resnet50_ibn_a':
             self.base = resnet50_ibn_a(last_stride)

@@ -59,7 +59,7 @@ SOLVER:
 
 TEST:
   IMS_PER_BATCH: 128
-  RE_RANKING: 'no'
+  RE_RANKING: 'yes'
   WEIGHT: "/home/liuk/kesci_result/baseline_kesci_focal_all/se_resnext101_model_120.pth"
   NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
