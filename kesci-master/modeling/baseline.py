@@ -109,6 +109,7 @@ class Baseline(nn.Module):
                               downsample_padding=0,
                               last_stride=last_stride)
         elif model_name == 'se_resnext101':
+            # self.in_planes = 1024
             self.base = SENet(block=SEResNeXtBottleneck,
                               layers=[3, 4, 23, 3],
                               groups=32,
@@ -145,7 +146,15 @@ class Baseline(nn.Module):
             print('Loading pretrained ImageNet model......')
 
         self.gap = nn.AdaptiveAvgPool2d(1)
+        # self.pool2d = nn.MaxPool2d(kernel_size=(8,8))
+        # self.bottle = Bottleneck(2048,512)
         # self.gap = nn.AdaptiveMaxPool2d(1)
+        # self.reduction_global = nn.Sequential(nn.Conv2d(2048,1024, 1, bias=False), nn.BatchNorm2d(1024), nn.ReLU())
+        # self.reduction_part_1 = nn.Sequential(nn.Conv2d(2048,512, 1, bias=False), nn.BatchNorm2d(512), nn.ReLU())
+        # self.reduction_part_2 = nn.Sequential(nn.Conv2d(2048,512, 1, bias=False), nn.BatchNorm2d(512), nn.ReLU())
+        # self.reduction_global.apply(weights_init_kaiming)
+        # self.reduction_part_1.apply(weights_init_kaiming)
+        # self.reduction_part_2.apply(weights_init_kaiming)
         self.num_classes = num_classes
         self.neck = neck
         self.neck_feat = neck_feat
@@ -161,12 +170,32 @@ class Baseline(nn.Module):
 
             self.bottleneck.apply(weights_init_kaiming)
             self.classifier.apply(weights_init_classifier)
+        # self.part_1_classifier = nn.Linear(512, self.num_classes, bias=False)
+        # self.part_2_classifier = nn.Linear(512, self.num_classes, bias=False)
+        # self.part_1_classifier.apply(weights_init_classifier)
+        # self.part_2_classifier.apply(weights_init_classifier)
 
     def forward(self, x):
 
-        global_feat = self.gap(self.base(x))  # (b, 2048, 1, 1)
-        global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
+        x = self.base(x)
+        #print(x.shape)
 
+        #global_feat = self.reduction_global(x)
+
+        global_feat = self.gap(x)  # (b, 2048, 1, 1)
+        #global_feat = self.reduction_global(global_feat)
+        global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
+        # print(global_feat.shape)
+
+        # part = self.bottle(x)
+        #
+        # part_feature = self.pool2d(x)
+        #
+        # part_1 = part_feature[:, :, 0:1, :]
+        # part_2 = part_feature[:, :, 1:2, :]
+        #
+        # cls_part1 = self.reduction_part_1(part_1).squeeze(dim=3).squeeze(dim=2)
+        # cls_part2 = self.reduction_part_2(part_2).squeeze(dim=3).squeeze(dim=2)
         if self.neck == 'no':
             feat = global_feat
         elif self.neck == 'bnneck':
@@ -174,6 +203,9 @@ class Baseline(nn.Module):
 
         if self.training:
             cls_score = self.classifier(feat)
+            # cls_score_1 = self.part_1_classifier(cls_part1)
+            # cls_score_2 = self.part_2_classifier(cls_part2)
+            #return [cls_score,cls_score_1,cls_score_2], [global_feat]
             return [cls_score], [global_feat]  # global feature for triplet loss
         else:
             if self.neck_feat == 'after':
@@ -181,6 +213,7 @@ class Baseline(nn.Module):
                 return feat
             else:
                 # print("Test with feature before BN")
+                #global_feat = torch.cat([global_feat,cls_part1,cls_part2],dim=1)
                 return global_feat
 
     def load_param(self, trained_path):

@@ -45,6 +45,8 @@ class FocalLoss(nn.Module):
         self.class_num = class_num
         self.alpha = alpha
         self.gamma = gamma
+        self.epsilon = 0.1
+        self.use_gpu = True
         if use_alpha:
             self.alpha = torch.tensor(alpha).cuda()
 
@@ -58,6 +60,9 @@ class FocalLoss(nn.Module):
 
         target_ = torch.zeros(target.size(0),self.class_num).cuda()
         target_.scatter_(1, target.view(-1, 1).long(), 1.)
+        # targets = torch.zeros(targets.size(0),self.class_num).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
+        # if self.use_gpu: targets = targets.cuda()
+        # target_ = (1 - self.epsilon) * targets + self.epsilon / self.class_num
 
         if self.use_alpha:
             batch_loss = - self.alpha.float() * torch.pow(1-prob,self.gamma).float() * prob.log().float() * target_.float()

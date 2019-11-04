@@ -6,7 +6,7 @@
 
 import torch.nn.functional as F
 
-from .triplet_loss import TripletLoss, CrossEntropyLabelSmooth
+from .triplet_loss import TripletLoss, CrossEntropyLabelSmooth,MSML_Loss
 from .center_loss import CenterLoss
 from .focal_loss import FocalLoss
 
@@ -54,6 +54,21 @@ def make_loss(cfg, num_classes):    # modified by gu
                 ## add by liu 10-29#################
                 loss_soft = [focal(cls,target) for cls in score]
                 loss_tri = [triplet(f,target)[0] for f in feat]
+                loss_soft = sum(loss_soft)/len(loss_soft)
+                loss_tri = sum(loss_tri)/len(loss_tri)
+                ########################
+                return loss_soft+loss_tri,loss_soft,loss_tri
+            else:
+                return xent(score, target) + triplet(feat, target)[0]
+    elif cfg.DATALOADER.SAMPLER == 'focal_msml':      ## new add by liu
+        def loss_func(score,feat,target):
+            if cfg.MODEL.METRIC_LOSS_TYPE == 'triplet':
+                #FocalLoss(gamma=2,alpha=0.25)(score,target)
+                focal = FocalLoss(num_classes,alpha=0.25,gamma=2,use_alpha=True)
+                msml = MSML_Loss(cfg.SOLVER.MARGIN)
+                ## add by liu 10-29#################
+                loss_soft = [focal(cls,target) for cls in score]
+                loss_tri = [msml(f,target)[0] for f in feat]
                 loss_soft = sum(loss_soft)/len(loss_soft)
                 loss_tri = sum(loss_tri)/len(loss_tri)
                 ########################

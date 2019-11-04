@@ -114,6 +114,24 @@ class TripletLoss(object):
         else:
             loss = self.ranking_loss(dist_an - dist_ap, y)
         return loss, dist_ap, dist_an
+class MSML_Loss(object):
+    def __init__(self, margin=None):
+        self.margin = margin
+        if margin is not None:
+            self.ranking_loss = nn.MarginRankingLoss(margin=margin)
+        else:
+            self.ranking_loss = nn.SoftMarginLoss()
+
+    def __call__(self, global_feat, labels, normalize_feature=False):
+        if normalize_feature:
+            global_feat = normalize(global_feat, axis=-1)
+        dist_mat = euclidean_dist(global_feat, global_feat)
+        dist_ap, dist_an = hard_example_mining(
+            dist_mat, labels)
+        dist_ap = torch.max(dist_ap)
+        dist_an = torch.min(dist_an)
+        loss = dist_ap-dist_an+0.3
+        return loss, dist_ap, dist_an
 
 class CrossEntropyLabelSmooth(nn.Module):
     """Cross entropy loss with label smoothing regularizer.
@@ -145,3 +163,9 @@ class CrossEntropyLabelSmooth(nn.Module):
         targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
         loss = (- targets * log_probs).mean(0).sum()
         return loss
+if __name__ == '__main__':
+    tri = MSML_Loss(0.3)
+    global_feat = torch.FloatTensor([[1,2,3,4],[2,3,4,5],[0,2,1,3],[1,3,2,4],[0,0,0,0],[1,2,1,1],[2,3,2,2],[24,4,4,4]])
+    labels = torch.LongTensor([1,0,1,0,1,1,0,0])
+    loss = tri(global_feat,labels)[0]
+    print(loss)
