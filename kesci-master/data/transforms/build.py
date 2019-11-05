@@ -18,8 +18,8 @@ def build_transforms(cfg, is_train=True):
             T.Pad(cfg.INPUT.PADDING),
             T.RandomCrop(cfg.INPUT.SIZE_TRAIN),
             T.ToTensor(),
-            normalize_transform])
-            # Cutout(cfg.INPUT.HOLE,cfg.INPUT.LENGTH)])
+            normalize_transform,
+            RandomErasing(cfg.INPUT.RE_PROB)])
     else:
         transform = T.Compose([
             T.Resize(cfg.INPUT.SIZE_TEST),

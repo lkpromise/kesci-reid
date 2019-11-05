@@ -11,7 +11,7 @@ from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.senet import SENet, SEResNetBottleneck, SEBottleneck, SEResNeXtBottleneck
 from .backbones.resnet_ibn_a import resnet50_ibn_a
 from .backbones.nonlocal_se import SENet_local
-
+import torch.nn.functional as F
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
@@ -35,7 +35,59 @@ def weights_init_classifier(m):
         if m.bias:
             nn.init.constant_(m.bias, 0.0)
 
+class PartAttention(nn.Module):
 
+    def __init__(self,num_classes):
+        super(PartAttention,self).__init__()
+        self.pool2d = nn.AdaptiveMaxPool2d(1)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.softmax = F.softmax
+        self.classifier_part1 = nn.Linear(512,num_classes,bias=False)
+        self.classifier_part2 = nn.Linear(512,num_classes,bias=False)
+        self.classifier_part3 = nn.Linear(512,num_classes,bias=False)
+
+        self.classifier_part1.apply(weights_init_classifier)
+        self.classifier_part2.apply(weights_init_classifier)
+        self.classifier_part3.apply(weights_init_classifier)
+
+        self.reduction_1 = nn.Sequential(nn.Conv2d(2048,512,1,bias=False),nn.BatchNorm2d(512),nn.ReLU())
+        self.reduction_2 = nn.Sequential(nn.Conv2d(2048,512,1,bias=False),nn.BatchNorm2d(512),nn.ReLU())
+        self.reduction_3 = nn.Sequential(nn.Conv2d(2048,512,1,bias=False),nn.BatchNorm2d(512),nn.ReLU())
+
+        self.reduction_1.apply(weights_init_kaiming)
+        self.reduction_2.apply(weights_init_kaiming)
+        self.reduction_3.apply(weights_init_kaiming)
+
+
+
+    def forward(self,x):
+         part_1_s = x[:,:,0:5,:]
+         part_2_s = x[:,:,5:10,:]
+         part_3_s = x[:,:,10:,:]
+
+         part_1 = self.pool2d(part_1_s)
+         part_1 = part_1.view(part_1.shape[0],-1)
+         part_1 = self.softmax(part_1,dim=1)
+
+         part_2 = self.pool2d(part_2_s)
+         part_2 = part_2.view(part_2.shape[0],-1)
+         part_2 = self.softmax(part_2,dim=1)
+
+         part_3 = self.pool2d(part_3_s)
+         part_3 = part_3.view(part_3.shape[0],-1)
+         part_3 = self.softmax(part_3,dim=1)
+
+         part_1_t = self.reduction_1(self.pool(part_1_s)*part_1.unsqueeze(dim=2).unsqueeze(dim=3)).squeeze(dim=3).squeeze(dim=2)
+         part_2_t = self.reduction_2(self.pool(part_2_s)*part_2.unsqueeze(dim=2).unsqueeze(dim=3)).squeeze(dim=3).squeeze(dim=2)
+         part_3_t = self.reduction_3(self.pool(part_3_s)*part_3.unsqueeze(dim=2).unsqueeze(dim=3)).squeeze(dim=3).squeeze(dim=2)
+
+         #print("it's right")
+
+         cls_1 = self.classifier_part1(part_1_t)
+         cls_2 = self.classifier_part2(part_2_t)
+         cls_3 = self.classifier_part3(part_3_t)
+
+         return part_1_t,part_2_t,part_3_t,cls_1,cls_2,cls_3
 class Baseline(nn.Module):
     in_planes = 2048
 
@@ -109,7 +161,7 @@ class Baseline(nn.Module):
                               downsample_padding=0,
                               last_stride=last_stride)
         elif model_name == 'se_resnext101':
-            # self.in_planes = 1024
+            #self.in_planes = 1024
             self.base = SENet(block=SEResNeXtBottleneck,
                               layers=[3, 4, 23, 3],
                               groups=32,
@@ -146,16 +198,18 @@ class Baseline(nn.Module):
             print('Loading pretrained ImageNet model......')
 
         self.gap = nn.AdaptiveAvgPool2d(1)
+
         # self.pool2d = nn.MaxPool2d(kernel_size=(8,8))
         # self.bottle = Bottleneck(2048,512)
         # self.gap = nn.AdaptiveMaxPool2d(1)
-        # self.reduction_global = nn.Sequential(nn.Conv2d(2048,1024, 1, bias=False), nn.BatchNorm2d(1024), nn.ReLU())
+        #self.reduction_global = nn.Sequential(nn.Conv2d(2048,1024, 1, bias=False), nn.BatchNorm2d(1024), nn.ReLU())
         # self.reduction_part_1 = nn.Sequential(nn.Conv2d(2048,512, 1, bias=False), nn.BatchNorm2d(512), nn.ReLU())
         # self.reduction_part_2 = nn.Sequential(nn.Conv2d(2048,512, 1, bias=False), nn.BatchNorm2d(512), nn.ReLU())
-        # self.reduction_global.apply(weights_init_kaiming)
+        #self.reduction_global.apply(weights_init_kaiming)
         # self.reduction_part_1.apply(weights_init_kaiming)
         # self.reduction_part_2.apply(weights_init_kaiming)
         self.num_classes = num_classes
+        #self.attention = PartAttention(self.num_classes)
         self.neck = neck
         self.neck_feat = neck_feat
 
@@ -178,6 +232,8 @@ class Baseline(nn.Module):
     def forward(self, x):
 
         x = self.base(x)
+
+        #part_1_t,part_2_t,part_3_t,cls_1,cls_2,cls_3 = self.attention(x)
         #print(x.shape)
 
         #global_feat = self.reduction_global(x)
@@ -201,6 +257,8 @@ class Baseline(nn.Module):
         elif self.neck == 'bnneck':
             feat = self.bottleneck(global_feat)  # normalize for angular softmax
 
+        #res_feat = torch.cat([global_feat,part_1_t,part_2_t,part_3_t],dim=1)
+
         if self.training:
             cls_score = self.classifier(feat)
             # cls_score_1 = self.part_1_classifier(cls_part1)
@@ -215,6 +273,7 @@ class Baseline(nn.Module):
                 # print("Test with feature before BN")
                 #global_feat = torch.cat([global_feat,cls_part1,cls_part2],dim=1)
                 return global_feat
+                # return res_feat
 
     def load_param(self, trained_path):
         param_dict = torch.load(trained_path)
