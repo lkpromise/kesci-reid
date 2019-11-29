@@ -6,6 +6,7 @@
 import copy
 import torch
 from torch import nn
+import random
 
 from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.senet import SENet, SEResNetBottleneck, SEBottleneck, SEResNeXtBottleneck
@@ -35,6 +36,23 @@ def weights_init_classifier(m):
         if m.bias:
             nn.init.constant_(m.bias, 0.0)
 
+class BatchDrop(nn.Module):
+    def __init__(self, h_ratio, w_ratio):
+        super(BatchDrop, self).__init__()
+        self.h_ratio = h_ratio
+        self.w_ratio = w_ratio
+
+    def forward(self, x):
+        if self.training:
+            h, w = x.size()[-2:]
+            rh = round(self.h_ratio * h)
+            rw = round(self.w_ratio * w)
+            sx = random.randint(0, h - rh)
+            sy = random.randint(0, w - rw)
+            mask = x.new_ones(x.size())
+            mask[:, :, sx:sx + rh, sy:sy + rw] = 0
+            x = x * mask
+        return x
 class PartAttention(nn.Module):
 
     def __init__(self,num_classes):
@@ -197,7 +215,33 @@ class Baseline(nn.Module):
             self.base.load_param(model_path)
             print('Loading pretrained ImageNet model......')
 
+
+
+        ## global
+
         self.gap = nn.AdaptiveAvgPool2d(1)
+        self.global_reduction = nn.Sequential(
+            nn.Conv2d(2048, 1024, 1),
+            nn.BatchNorm2d(1024),
+            nn.ReLU()
+        )
+        self.global_reduction.apply(weights_init_kaiming)
+
+        # part
+
+        self.part = Bottleneck(2048, 512)
+        self.part_maxpool = nn.AdaptiveMaxPool2d((1, 1))
+        self.batch_drop = BatchDrop(0.5, 0.5)
+        self.part_reduction = nn.Sequential(
+            nn.Linear(2048, 1024, True),
+            nn.BatchNorm1d(1024),
+            nn.ReLU()
+        )
+
+        self.part_reduction.apply(weights_init_kaiming)
+        self.part_bn = nn.BatchNorm1d(1024)
+        self.part_softmax = nn.Linear(1024, num_classes,bias=False)
+        self.part_softmax.apply(weights_init_classifier)
 
         # self.pool2d = nn.MaxPool2d(kernel_size=(8,8))
         # self.bottle = Bottleneck(2048,512)
@@ -239,9 +283,16 @@ class Baseline(nn.Module):
         #global_feat = self.reduction_global(x)
 
         global_feat = self.gap(x)  # (b, 2048, 1, 1)
-        #global_feat = self.reduction_global(global_feat)
+        #global_feat = self.global_reduction(global_feat)
         global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
         # print(global_feat.shape)
+        #
+        #
+        # part branch
+        # x = self.part(x)
+        # x = self.batch_drop(x)
+        # part_feature = self.part_maxpool(x).view(x.size(0), -1)
+        # part_feature = self.part_reduction(part_feature)
 
         # part = self.bottle(x)
         #
@@ -252,6 +303,7 @@ class Baseline(nn.Module):
         #
         # cls_part1 = self.reduction_part_1(part_1).squeeze(dim=3).squeeze(dim=2)
         # cls_part2 = self.reduction_part_2(part_2).squeeze(dim=3).squeeze(dim=2)
+        ## 训练amsoftmax时做的改变，不使用该loss 时需要改回去   --add by liuk
         if self.neck == 'no':
             feat = global_feat
         elif self.neck == 'bnneck':
@@ -261,10 +313,12 @@ class Baseline(nn.Module):
 
         if self.training:
             cls_score = self.classifier(feat)
+            #part_cls_score = self.part_softmax(self.part_bn(part_feature))
             # cls_score_1 = self.part_1_classifier(cls_part1)
             # cls_score_2 = self.part_2_classifier(cls_part2)
             #return [cls_score,cls_score_1,cls_score_2], [global_feat]
-            return [cls_score], [global_feat]  # global feature for triplet loss
+            #print(torch.cat([global_feat,part_feature],dim=1).shape)
+            return cls_score, global_feat  # global feature for triplet loss
         else:
             if self.neck_feat == 'after':
                 # print("Test with feature after BN")
@@ -273,7 +327,7 @@ class Baseline(nn.Module):
                 # print("Test with feature before BN")
                 #global_feat = torch.cat([global_feat,cls_part1,cls_part2],dim=1)
                 return global_feat
-                # return res_feat
+                #return torch.cat([global_feat,part_feature],dim=1)
 
     def load_param(self, trained_path):
         param_dict = torch.load(trained_path)

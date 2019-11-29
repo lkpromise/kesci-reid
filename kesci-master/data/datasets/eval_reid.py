@@ -31,6 +31,7 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
         # remove gallery samples that have the same pid and camid with query
         order = indices[q_idx]
         remove = (g_pids[order] == q_pid) & (g_camids[order] == q_camid)
+        ## 按位进行not，得到应该保留的位置
         keep = np.invert(remove)
 
         # compute cmc curve
@@ -40,7 +41,10 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
             # this condition is true when query identity does not appear in gallery
             continue
 
+        ## .cumsum()，累计的数目，主要是累计之前的列
+
         cmc = orig_cmc.cumsum()
+        ## 将有的设为1，因为是1就表示已经命中了
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
@@ -51,6 +55,7 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
         num_rel = orig_cmc.sum()
         tmp_cmc = orig_cmc.cumsum()
         tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        ## 这一步将是0的概率全部清零，因此是满足要求的，还是符合ap的计算规则
         tmp_cmc = np.asarray(tmp_cmc) * orig_cmc
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
@@ -83,6 +88,6 @@ def eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
         result[query_name]=ctx
     # 写入csv文件
     print("正在写入...")
-    with open("result_1102_01.json",'w',encoding="utf-8") as f:
+    with open("result_1128_01.json",'w',encoding="utf-8") as f:
         json.dump(result,f)
         print("已写入结果文件")

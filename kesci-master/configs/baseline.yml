@@ -1,11 +1,11 @@
 MODEL:
   PRETRAIN_CHOICE: 'imagenet'
-  PRETRAIN_PATH: '/home/haoluo/.torch/models/resnet50-19c8e357.pth'
-  LAST_STRIDE: 2
-  NECK: 'no'
-  METRIC_LOSS_TYPE: 'triplet'
-  IF_LABELSMOOTH: 'off'
-  IF_WITH_CENTER: 'no'
+  PRETRAIN_PATH: '/home/liuk/.torch/models/resnet50-19c8e357.pth'
+  METRIC_LOSS_TYPE: 'triplet_center'
+  IF_LABELSMOOTH: 'on'
+  IF_WITH_CENTER: 'yes'
+  DEVICE_ID: ('0,1')
+  NAME: resnet50
 
 
 INPUT:
@@ -16,7 +16,9 @@ INPUT:
   PADDING: 10
 
 DATASETS:
-  NAMES: ('market1501')
+  NAMES: ('kesci')
+  ## 需要修改自己的market文件地址
+  ROOT_DIR: ('/home/liuk/data')
 
 DATALOADER:
   SAMPLER: 'softmax_triplet'
@@ -28,10 +30,12 @@ SOLVER:
   MAX_EPOCHS: 120
   BASE_LR: 0.00035
 
+  #MARGIN: 2.0
+
   CLUSTER_MARGIN: 0.3
 
   CENTER_LR: 0.5
-  CENTER_LOSS_WEIGHT: 0.0005
+  CENTER_LOSS_WEIGHT: 0.00025
 
   RANGE_K: 2
   RANGE_MARGIN: 0.3
@@ -42,13 +46,13 @@ SOLVER:
   BIAS_LR_FACTOR: 1
   WEIGHT_DECAY: 0.0005
   WEIGHT_DECAY_BIAS: 0.0005
-  IMS_PER_BATCH: 64
+  IMS_PER_BATCH: 128
 
   STEPS: [40, 70]
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.01
-  WARMUP_ITERS: 0
+  WARMUP_ITERS: 10
   WARMUP_METHOD: 'linear'
 
   CHECKPOINT_PERIOD: 40
@@ -57,11 +61,9 @@ SOLVER:
 
 TEST:
   IMS_PER_BATCH: 128
-  RE_RANKING: 'no'
-  WEIGHT: "path"
-  NECK_FEAT: 'after'
+  RE_RANKING: 'yes'
+  WEIGHT: "/home/liuk/kesci_result/kesci_focal_margin2/se_resnext101_model_120.pth"
+  NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
-
-OUTPUT_DIR: "/home/haoluo/log/gu/reid_baseline_review/Opensource_test/market1501/Experiment-all-tricks-256x128-bs16x4-warmup10-erase0_5-labelsmooth_on-laststride1-bnneck_on"
-
-
+## 仅使用超过一张的样本进行训练
+OUTPUT_DIR: "/home/liuk/kesci_result/baseline"

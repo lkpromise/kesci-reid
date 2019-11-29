@@ -63,7 +63,7 @@ class Kesci(BaseImageDataset):
         if not osp.exists(self.gallery_dir):
             raise RuntimeError("'{}' is not available".format(self.gallery_dir))
 
-    def _process_dir(self, dir_path, relabel=False,type=False):
+    def _process_dir(self, dir_path, relabel=False,type=False,gan=False):
         dataset = []
         if relabel:
             file_path = osp.join(dir_path,"list.txt")
@@ -77,7 +77,10 @@ class Kesci(BaseImageDataset):
             with open(file_path,'r') as f:
                 file = f.readlines()
                 for line in file:
-                    img_name = line.split()[0].split('/')[-1]
+                    if gan:
+                        img_name = line.split()[0]
+                    else:
+                        img_name = line.split()[0].split('/')[-1]
                     img_path = osp.join(dir_path,img_name)
                     id = int(line.split()[-1])
                     if type: id =pid2label[id]

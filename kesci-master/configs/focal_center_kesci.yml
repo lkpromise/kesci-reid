@@ -33,7 +33,7 @@ SOLVER:
   CLUSTER_MARGIN: 0.3
 
   CENTER_LR: 0.5
-  CENTER_LOSS_WEIGHT: 0.003
+  CENTER_LOSS_WEIGHT: 0.00025
 
   RANGE_K: 2
   RANGE_MARGIN: 0.3
@@ -50,7 +50,7 @@ SOLVER:
   GAMMA: 0.1
 
   WARMUP_FACTOR: 0.01
-  WARMUP_ITERS: 0
+  WARMUP_ITERS: 10
   WARMUP_METHOD: 'linear'
 
   CHECKPOINT_PERIOD: 40
@@ -64,4 +64,4 @@ TEST:
   NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
 
-OUTPUT_DIR: "/home/liuk/kesci_result/focal_center/test_log"
+OUTPUT_DIR: "/home/liuk/kesci_result/focal_center/test"

@@ -142,9 +142,16 @@ class ResNet_IBN(nn.Module):
 
     def load_param(self, model_path):
         param_dict = torch.load(model_path)
+        # for key in self.state_dict():
+        #     print(key)
         for i in param_dict:
+            print(i)
             if 'fc' in i:
                 continue
+            # if 'layer' in i and 'bn.' in i:        ## add by liu
+            #     j = i.replace('bn.','BN.',1)
+            #     self.state_dict()[j].copy_(param_dict[i])
+            #     continue
             self.state_dict()[i].copy_(param_dict[i])
 
 

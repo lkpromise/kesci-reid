@@ -13,6 +13,7 @@ from ignite.handlers import ModelCheckpoint, Timer
 from ignite.metrics import RunningAverage
 
 from utils.reid_metric import R1_mAP
+# from layers.arc_loss import ArcCos
 
 global ITER
 ITER = 0
@@ -48,7 +49,7 @@ def create_supervised_trainer(model, optimizer, loss_fn,
         loss.backward()
         optimizer.step()
         # compute acc
-        acc = (score[0].max(1)[1] == target).float().mean()
+        acc = (score.max(1)[1] == target).float().mean()
         return loss.item(), acc.item(),cross.item(),tri.item()  ## modified by liu
 
     return Engine(_update)
@@ -96,7 +97,7 @@ def create_supervised_trainer_with_center(model, center_criterion, optimizer, op
         optimizer_center.step()
 
         # compute acc
-        acc = (score[0].max(1)[1] == target).float().mean()
+        acc = (score.max(1)[1] == target).float().mean()
         return loss.item(), acc.item(),cross.item(),tri.item(),center.item()  ### modified by liu
 
     return Engine(_update)

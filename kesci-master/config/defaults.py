@@ -99,6 +99,11 @@ _C.SOLVER.BASE_LR = 3e-4
 _C.SOLVER.BIAS_LR_FACTOR = 2
 # Momentum
 _C.SOLVER.MOMENTUM = 0.9
+# Margin of ranked list loss 
+_C.SOLVER.MARGIN_RANK = 1.3  ### R = ALPHA - MARGIN_RANK
+_C.SOLVER.ALPHA = 2.0
+_C.SOLVER.TVAL = 1.0
+_C.SOLVER.WEIGHT = 0.4       ### loss = softmax + w*ranked_loss
 # Margin of triplet loss
 _C.SOLVER.MARGIN = 0.3
 # Margin of cluster ;pss

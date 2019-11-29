@@ -58,6 +58,8 @@ def main():
 
     train_loader, val_loader, num_query, num_classes = make_data_loader(cfg)
     model = build_model(cfg, num_classes)
+    #model.part1.load_param("/home/liuk/kesci_result/baseline_kesci_focal/test/se_resnext101_model_80.pth")
+    #model.part2.load_param("/home/liuk/kesci_result/ibn_kesci/resnet50_ibn_a_model_80.pth")
     model.load_param(cfg.TEST.WEIGHT)
 
     inference(cfg, model, val_loader, num_query)

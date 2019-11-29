@@ -23,8 +23,8 @@ class Kesci_all(BaseImageDataset):
         self.dataset_dir = osp.join(root, self.dataset_dir)
         ## 用全部数据训练，并生成测试结果
         self.train_dir = osp.join(self.dataset_dir, 'train_data/train_set')
-        self.query_dir = osp.join(self.dataset_dir, 'test_data/query_a')
-        self.gallery_dir = osp.join(self.dataset_dir, 'test_data/gallery_a')
+        self.query_dir = osp.join(self.dataset_dir, 'testB_data/query_b')
+        self.gallery_dir = osp.join(self.dataset_dir, 'testB_data/gallery_b')
 
         # self.train_dir = osp.join(self.dataset_dir, 'train_data/train_part')
         # self.query_dir = osp.join(self.dataset_dir, 'valid_data/query')
@@ -88,8 +88,8 @@ class Kesci_all(BaseImageDataset):
             for i in img_name:
                 img_path = osp.join(dir_path,i)
                 ## 生成结果的时候才能用下面这一行
-                id = i.split('.')[0]
-                #id = random.randint(4768,8600)
+                #id = i.split('.')[0]
+                id = random.randint(4768,8600)
                 camid = random.randint(0,6)
                 dataset.append((img_path,id,camid))
         return dataset

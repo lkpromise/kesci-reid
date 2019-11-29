@@ -5,6 +5,7 @@
 """
 import torch
 from torch import nn
+from torch.autograd import Variable
 
 
 def normalize(x, axis=-1):
@@ -98,6 +99,7 @@ class TripletLoss(object):
     def __init__(self, margin=None):
         self.margin = margin
         if margin is not None:
+            ## 模拟那个max的过程
             self.ranking_loss = nn.MarginRankingLoss(margin=margin)
         else:
             self.ranking_loss = nn.SoftMarginLoss()
@@ -110,28 +112,91 @@ class TripletLoss(object):
             dist_mat, labels)
         y = dist_an.new().resize_as_(dist_an).fill_(1)
         if self.margin is not None:
+            ## 因为marginloss的形式是-y*(x_1-x_2),因此需要把y都设为1同时，an与ap写反。
             loss = self.ranking_loss(dist_an, dist_ap, y)
         else:
             loss = self.ranking_loss(dist_an - dist_ap, y)
         return loss, dist_ap, dist_an
-class MSML_Loss(object):
-    def __init__(self, margin=None):
-        self.margin = margin
-        if margin is not None:
-            self.ranking_loss = nn.MarginRankingLoss(margin=margin)
+class TripletLossAll(nn.Module):
+    '''
+    Original margin ranking loss:
+        loss(x1, x2, y) = max(0, -y * (x1 - x2) + margin)
+    
+    Let z = -y * (x1 - x2)
+    Soft_margin mode:
+        loss(x1, x2, y) = log(1 + exp(z))
+    Batch_hard mode:
+        z = -y * (x1' - x2'),
+        where x1' is the max x1 within a batch,
+        x2' is the min x2 within a batch
+    '''
+    def __init__(self, margin=0, batch_hard=False):
+        """
+        Args:
+            margin: int or 'soft'
+            batch_hard: whether to use batch_hard loss
+        """
+        super(TripletLossAll, self).__init__()
+        self.batch_hard = batch_hard
+        if isinstance(margin, float) or margin == 'soft':
+            self.margin = margin
         else:
-            self.ranking_loss = nn.SoftMarginLoss()
+            raise NotImplementedError(
+                'The margin {} is not recognized in TripletLoss()'.format(margin))
 
-    def __call__(self, global_feat, labels, normalize_feature=False):
-        if normalize_feature:
-            global_feat = normalize(global_feat, axis=-1)
-        dist_mat = euclidean_dist(global_feat, global_feat)
-        dist_ap, dist_an = hard_example_mining(
-            dist_mat, labels)
-        dist_ap = torch.max(dist_ap)
-        dist_an = torch.min(dist_an)
-        loss = dist_ap-dist_an+0.3
-        return loss, dist_ap, dist_an
+    def forward(self, feat, id=None, pos_mask=None, neg_mask=None, mode='id'):
+        dist = self.cdist(feat, feat)
+        if mode == 'id':
+            if id is None:
+                 raise RuntimeError('foward is in id mode, please input id!')
+            else:
+                 identity_mask = Variable(torch.eye(feat.size(0)).byte())
+                 identity_mask = identity_mask.cuda() if id.is_cuda else identity_mask
+                 same_id_mask = torch.eq(id.unsqueeze(1), id.unsqueeze(0))
+                 negative_mask = same_id_mask ^ 1
+                 positive_mask = same_id_mask ^ identity_mask
+        elif mode == 'mask':
+            if pos_mask is None or neg_mask is None:
+                 raise RuntimeError('foward is in mask mode, please input pos_mask & neg_mask!')
+            else:
+                 positive_mask = pos_mask
+                 same_id_mask = neg_mask ^ 1
+        else:
+            raise ValueError('unrecognized mode')
+        if self.batch_hard:
+            max_positive = (dist * positive_mask.float()).max(1)[0]
+            min_negative = (dist + 1e5*same_id_mask.float()).min(1)[0]
+            z = max_positive - min_negative
+        else:
+            pos = positive_mask.topk(k=1, dim=1)[1].view(-1,1)
+            positive = torch.gather(dist, dim=1, index=pos)
+            pos = negative_mask.topk(k=1, dim=1)[1].view(-1,1)
+            negative = torch.gather(dist, dim=1, index=pos)
+            z = positive - negative
+        if isinstance(self.margin, float):
+            b_loss = torch.clamp(z + self.margin, min=0)
+        elif self.margin == 'soft':
+            b_loss = torch.log(1 + torch.exp(z))
+        else:
+            raise NotImplementedError("How do you even get here!")
+        # index= torch.argmax(b_loss)
+        # print(index)
+        loss = b_loss.sum()
+        return loss,z
+            
+    def cdist(self, a, b):
+        '''
+        Returns euclidean distance between a and b
+        
+        Args:
+             a (2D Tensor): A batch of vectors shaped (B1, D)
+             b (2D Tensor): A batch of vectors shaped (B2, D)
+        Returns:
+             A matrix of all pairwise distance between all vectors in a and b,
+             will be shape of (B1, B2)
+        '''
+        diff = a.unsqueeze(1) - b.unsqueeze(0)
+        return ((diff**2).sum(2)+1e-12).sqrt()
 
 class CrossEntropyLabelSmooth(nn.Module):
     """Cross entropy loss with label smoothing regularizer.
