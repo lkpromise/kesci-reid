@@ -265,16 +265,16 @@ class mix_module(nn.Module):
         #model_path2 = "/home/liuk/kesci_result/ibn_kesci/resnet50_ibn_a_model_120.pth"
         super(mix_module,self).__init__()
         model_path1 = "/home/liuk/code/pretrained/se_resnext101_32x4d-3b2fe3d8.pth"
-        #model_path2 = "/home/liuk/.torch/models/r50_ibn_a.pth"
+        model_path2 = "/home/liuk/.torch/models/r50_ibn_a.pth"
         self.part1 = se_resnext101(num_classes, last_stride, model_path1, neck, neck_feat, model_name, pretrain_choice)
-        # self.part2 = ibn_a(2772, last_stride, model_path2, neck, neck_feat, model_name, pretrain_choice)
+        self.part2 = ibn_a(2772, last_stride, model_path2, neck, neck_feat, model_name, pretrain_choice)
         # self.part3 = rank(num_classes, last_stride, model_path1, neck, neck_feat, model_name, pretrain_choice)
     def forward(self,x):
         feature1 = self.part1(x)
-        # feature2 = self.part2(x)
+        feature2 = self.part2(x)
         # feature3 = self.part3(x)
 
-        return feature1
+        return torch.cat([feature1,feature2],dim=1)
 
 
     
