@@ -58,6 +58,7 @@ def main():
 
     train_loader, val_loader, num_query, num_classes = make_data_loader(cfg)
     model = build_model(cfg, num_classes)
+    ## 这里需要修改为模型文件的地址
     model.part1.load_param("/home/liuk/kesci_result/baseline_kesci_focal_all/se_resnext101_model_120.pth")
     model.part2.load_param("/home/liuk/kesci_result/ibn_kesci_all/resnet50_ibn_a_model_120.pth")
     # model.part3.load_param("/home/liuk/kesci_result/rank_softmax_all/se_resnext101_model_120.pth")

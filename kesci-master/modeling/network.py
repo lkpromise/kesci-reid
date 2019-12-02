@@ -264,6 +264,7 @@ class mix_module(nn.Module):
         #model_path1 = "/home/liuk/kesci_result/baseline_kesci_focal/test/se_resnext101_model_120.pth"
         #model_path2 = "/home/liuk/kesci_result/ibn_kesci/resnet50_ibn_a_model_120.pth"
         super(mix_module,self).__init__()
+        # 修改为预训练模型文件的地址
         model_path1 = "/home/liuk/code/pretrained/se_resnext101_32x4d-3b2fe3d8.pth"
         model_path2 = "/home/liuk/.torch/models/r50_ibn_a.pth"
         self.part1 = se_resnext101(num_classes, last_stride, model_path1, neck, neck_feat, model_name, pretrain_choice)
