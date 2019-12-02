@@ -88,6 +88,6 @@ def eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50):
         result[query_name]=ctx
     # 写入csv文件
     print("正在写入...")
-    with open("result_1128_01.json",'w',encoding="utf-8") as f:
+    with open("result_1129_02.json",'w',encoding="utf-8") as f:
         json.dump(result,f)
         print("已写入结果文件")

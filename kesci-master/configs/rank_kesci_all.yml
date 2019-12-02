@@ -66,4 +66,4 @@ TEST:
   NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
 
-OUTPUT_DIR: "/home/liuk/kesci_result/rank_softmax_all"
+OUTPUT_DIR: "/home/liuk/kesci_result/rank_softmax_all/test_log"
