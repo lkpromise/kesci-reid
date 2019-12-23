@@ -12,6 +12,7 @@ from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.senet import SENet, SEResNetBottleneck, SEBottleneck, SEResNeXtBottleneck
 from .backbones.resnet_ibn_a import resnet50_ibn_a
 from .backbones.nonlocal_se import SENet_local
+from .backbones.osnet import osnet_x1_0
 import torch.nn.functional as F
 
 def weights_init_kaiming(m):
@@ -210,38 +211,44 @@ class Baseline(nn.Module):
                               last_stride=last_stride)
         elif model_name == 'resnet50_ibn_a':
             self.base = resnet50_ibn_a(last_stride)
+        elif model_name == 'osnet_x1_0':
+            self.in_planes = 512
+            self.base =osnet_x1_0()
 
-        if pretrain_choice == 'imagenet':
+
+        if pretrain_choice == 'imagenet' and model_name!='osnet_x1_0':
             self.base.load_param(model_path)
             print('Loading pretrained ImageNet model......')
+        else:
+            print("Loading pretrained model from osnet......")
 
 
 
         ## global
 
         self.gap = nn.AdaptiveAvgPool2d(1)
-        self.global_reduction = nn.Sequential(
-            nn.Conv2d(2048, 1024, 1),
-            nn.BatchNorm2d(1024),
-            nn.ReLU()
-        )
-        self.global_reduction.apply(weights_init_kaiming)
+        # self.global_reduction = nn.Sequential(
+        #     nn.Conv2d(2048, 1024, 1),
+        #     nn.BatchNorm2d(1024),
+        #     nn.ReLU()
+        # )
+        # self.global_reduction.apply(weights_init_kaiming)
 
         # part
 
-        self.part = Bottleneck(2048, 512)
-        self.part_maxpool = nn.AdaptiveMaxPool2d((1, 1))
-        self.batch_drop = BatchDrop(0.5, 0.5)
-        self.part_reduction = nn.Sequential(
-            nn.Linear(2048, 1024, True),
-            nn.BatchNorm1d(1024),
-            nn.ReLU()
-        )
+        # self.part = Bottleneck(2048, 512)
+        # self.part_maxpool = nn.AdaptiveMaxPool2d((1, 1))
+        # self.batch_drop = BatchDrop(0.5, 0.5)
+        # self.part_reduction = nn.Sequential(
+        #     nn.Linear(2048, 1024, True),
+        #     nn.BatchNorm1d(1024),
+        #     nn.ReLU()
+        # )
 
-        self.part_reduction.apply(weights_init_kaiming)
-        self.part_bn = nn.BatchNorm1d(1024)
-        self.part_softmax = nn.Linear(1024, num_classes,bias=False)
-        self.part_softmax.apply(weights_init_classifier)
+        # self.part_reduction.apply(weights_init_kaiming)
+        # self.part_bn = nn.BatchNorm1d(1024)
+        # self.part_softmax = nn.Linear(1024, num_classes,bias=False)
+        # self.part_softmax.apply(weights_init_classifier)
 
         # self.pool2d = nn.MaxPool2d(kernel_size=(8,8))
         # self.bottle = Bottleneck(2048,512)

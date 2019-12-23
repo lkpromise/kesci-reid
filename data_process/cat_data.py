@@ -1,4 +1,4 @@
-## 查看数据分布的一个脚本
+## 调整数据分配，构建验证集，便于线下调试
 ## author：liu
 ## date:2019-10-28
 import matplotlib.pyplot as plt

@@ -16,15 +16,16 @@ from .bases import BaseImageDataset
 
 class Kesci_all(BaseImageDataset):
 
-    dataset_dir = 'kesci'
+    dataset_dir = 'kesci-fu'
 
     def __init__(self, root='/home/liuk/data/', verbose=True, **kwargs):
         super(Kesci_all, self).__init__()
         self.dataset_dir = osp.join(root, self.dataset_dir)
         ## 用全部数据训练，并生成测试结果
-        self.train_dir = osp.join(self.dataset_dir, 'train_data/train_set')
-        self.query_dir = osp.join(self.dataset_dir, 'testB_data/query_b')
-        self.gallery_dir = osp.join(self.dataset_dir, 'testB_data/gallery_b')
+        # self.train_dir = osp.join(self.dataset_dir, 'train_valid/train_temp')
+        self.train_dir = osp.join(self.dataset_dir, 'train_more1')
+        self.query_dir = osp.join(self.dataset_dir, 'test/query_a')
+        self.gallery_dir = osp.join(self.dataset_dir, 'test/gallery_a')
 
         # self.train_dir = osp.join(self.dataset_dir, 'train_data/train_part')
         # self.query_dir = osp.join(self.dataset_dir, 'valid_data/query')
@@ -89,7 +90,7 @@ class Kesci_all(BaseImageDataset):
                 img_path = osp.join(dir_path,i)
                 ## 生成结果的时候才能用下面这一行
                 id = i.split('.')[0]
-                #id = random.randint(4768,8600)
+                # id = random.randint(4768,8600)
                 camid = random.randint(0,6)
                 dataset.append((img_path,id,camid))
         return dataset

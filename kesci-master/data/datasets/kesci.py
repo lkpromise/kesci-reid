@@ -16,7 +16,7 @@ from .bases import BaseImageDataset
 
 class Kesci(BaseImageDataset):
 
-    dataset_dir = 'kesci'
+    dataset_dir = 'kesci-fu/train_valid'
 
     def __init__(self, root='/home/liuk/data/', verbose=True, **kwargs):
         super(Kesci, self).__init__()
@@ -26,9 +26,9 @@ class Kesci(BaseImageDataset):
         # self.query_dir = osp.join(self.dataset_dir, 'test_data/query_a')
         # self.gallery_dir = osp.join(self.dataset_dir, 'test_data/gallery_a')
 
-        self.train_dir = osp.join(self.dataset_dir, 'train_data/train_part')
-        self.query_dir = osp.join(self.dataset_dir, 'valid_data/query')
-        self.gallery_dir = osp.join(self.dataset_dir, 'valid_data/gallery')
+        self.train_dir = osp.join(self.dataset_dir, 'train_temp')
+        self.query_dir = osp.join(self.dataset_dir, 'query')
+        self.gallery_dir = osp.join(self.dataset_dir, 'gallery')
 
         self._check_before_run()
 

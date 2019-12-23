@@ -37,7 +37,10 @@ def make_loss(cfg, num_classes):    # modified by gu
 
     if sampler == 'softmax':
         def loss_func(score, feat, target):
-            return F.cross_entropy(score, target)
+            ## 修改，只使用label smooth下的softmax，不使用三元组
+            loss_soft = xent(score,target)
+            return loss_soft,loss_soft,loss_soft
+            # return F.cross_entropy(score, target)
     elif cfg.DATALOADER.SAMPLER == 'triplet':
         def loss_func(score, feat, target):
             return triplet(feat, target)[0]

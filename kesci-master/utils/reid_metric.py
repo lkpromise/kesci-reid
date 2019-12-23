@@ -172,7 +172,7 @@ class R1_mAP_reranking_kesci(Metric):
         # distmat.addmm_(1, -2, qf, gf.t())
         # distmat = distmat.cpu().numpy()
         print("Enter reranking")
-        distmat = re_ranking(qf, gf, k1=6, k2=3, lambda_value=0.7)
+        distmat = re_ranking(qf, gf, k1=10, k2=3, lambda_value=0.7)
         eval_func_kesci(distmat, q_pids, g_pids, q_camids, g_camids)
 
         #return cmc, mAP
